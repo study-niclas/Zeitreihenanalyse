@@ -4,9 +4,7 @@ Projekt zu der Zeitreihenanalyse im Schwerpunkt Vertiefung Business Analytics
 Lokales .venv aufsetzen und mit pip install -r requirements.txt alle erforderlichen bibliotheken laden
 
 
-### .venv setup
-
-in  powershell 
+### .venv setup (via powershell in windows) 
 
 Get-ExecutionPolicy
 output: Restricted, dann: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
