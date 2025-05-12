@@ -6,3 +6,4 @@
 #TODO Daten splitten(80/20) für Modelltest - wie gut ist der predict
 #TODO ACF and PACF https://medium.com/@kis.andras.nandor/understanding-autocorrelation-and-partial-autocorrelation-functions-acf-and-pacf-2998e7e1bcb5
 #TODO Daten Visualisieren und va predict zu Relität unterschiede highlighten
+#TODO https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques
