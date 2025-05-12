@@ -34,6 +34,6 @@ y_log = np.log(y)
 y_stationary = y_log.diff().dropna()
 
 # Plot der transformierten Zeitreihe
-y_stationary.plot(title='Transformierte Zeitreihe (Log + 1. Differenz)', figsize=(10, 5))
+y_stationary.plot(title='Transformierte Zeitreihe', figsize=(10, 5))
 plt.grid(True)
 plt.show()
