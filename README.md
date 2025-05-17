@@ -3,13 +3,15 @@ Projekt zu der Zeitreihenanalyse im Schwerpunkt Vertiefung Business Analytics
 
 ## Funktionalität
 
-##Setup
+-- TBD
+
+## Setup
 
 pip install -r requirements.txt alle erforderlichen bibliotheken laden
 
 ### .venv
 
-#### in Windoew
+#### in Windows
 
 - Get-ExecutionPolicy output: falls Restricted, dann: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 - .venv anlegen wenn noch nicht verhanden mit: python -m venv .venv
