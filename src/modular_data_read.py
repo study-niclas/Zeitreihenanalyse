@@ -17,63 +17,65 @@ class TickerDataManager:
 
         if os.path.exists(filepath):
             print(f"Lese lokale Datei für {share_ticker} ein...")
-            share_history = pd.read_csv(filepath, index_col=0, parse_dates=True)
+            share_history = pd.read_csv(filepath, index_col=0, parse_dates=True)['Close']
         else:
             print(f"Lade Daten von yfinance für {share_ticker}...")
             share = yf.Ticker(str(share_ticker))
             period_str = str(period) + "y"
             share_history = share.history(period=period_str)['Close']
-            # Direkt lokal speichern
             share_history.to_csv(filepath)
 
-        # Speichern im internen Dictionary
-        self.ticker_dict[share_ticker] = share_history
-
-        # Plot anzeigen
-        #share_history.plot(title=share_ticker)
-        #plt.ylabel("EUR")
-        #plt.show()
+        self.ticker_dict[share_ticker] = {
+            "raw": share_history,
+            "normalized": share_history / share_history.iloc[0]
+        }
 
     def data_save(self, share_ticker):
         if share_ticker not in self.ticker_dict:
             raise ValueError(f"{share_ticker} nicht im Speicher vorhanden. Erst mit `.data_read(...)` laden.")
         
-        filepath = self._get_filepath(share_ticker)
-        self.ticker_dict[share_ticker].to_csv(filepath)
+        filepath = self.get_filepath(share_ticker)
+        # Speichere die Rohdaten, nicht die normalisierten
+        self.ticker_dict[share_ticker]["raw"].to_csv(filepath)
         
-    def plot_all(self):
-
+    def plot_all(self, mode="raw"):
         plt.figure(figsize=(12, 6))
-        for ticker, series in self.ticker_dict.items():
+        for ticker, data in self.ticker_dict.items():
+            series = data[mode]
             plt.plot(series, label=ticker)
 
-        plt.title("Kursverläufe aller geladenen Ticker")
+        plt.title(f"Kursverläufe aller geladenen Ticker ({mode})")
         plt.xlabel("Datum")
-        plt.ylabel("Kurs (EUR)")
+        ylabel = "Kurs (EUR)" if mode == "raw" else "Indexiert (Start=1)"
+        plt.ylabel(ylabel)
         plt.legend()
         plt.grid(True)
         plt.tight_layout()
         plt.show()
         
-    def plot_all_extended(self, ma_window=50):
-        for ticker, series in self.ticker_dict.items():
-            # Sicherstellen, dass wir ein DataFrame mit Spalte 'Close' haben
+    def plot_all_extended(self, ma_window=50, mode="raw"):
+        for ticker, data in self.ticker_dict.items():
+            series = data[mode]
             if isinstance(series, pd.Series):
                 df = series.to_frame(name='Close')
             else:
                 df = series.copy()
             df.columns = ['Close']
             df['MA'] = df['Close'].rolling(window=ma_window).mean()
-            df['Normalized'] = df['Close'] / df['Close'].iloc[0] * 100
+            if mode == "normalized":
+                # Normalisierte Daten bereits skaliert auf 1 am Anfang
+                df['Normalized'] = df['Close'] * 100  # Index auf 100 setzen
+            else:
+                df['Normalized'] = df['Close'] / df['Close'].iloc[0] * 100
             df['Pct Change'] = df['Close'].pct_change().cumsum() * 100  # kumulierte prozentuale Veränderung
 
             fig, axs = plt.subplots(3, 1, figsize=(10, 12), sharex=True)
-            fig.suptitle(f"{ticker} - Kursanalyse", fontsize=14)
+            fig.suptitle(f"{ticker} - Kursanalyse ({mode})", fontsize=14)
 
             # 1. Original + Moving Average
             axs[0].plot(df.index, df['Close'], label="Kurs")
             axs[0].plot(df.index, df['MA'], label=f"{ma_window}-Tage Moving Avg", linestyle='--')
-            axs[0].set_ylabel("EUR")
+            axs[0].set_ylabel("EUR" if mode == "raw" else "Indexiert")
             axs[0].legend()
             axs[0].set_title("Kurs & Gleitender Durchschnitt")
 
@@ -90,7 +92,3 @@ class TickerDataManager:
 
             plt.tight_layout(rect=[0, 0.03, 1, 0.95])
             plt.show()
-
-
-
-

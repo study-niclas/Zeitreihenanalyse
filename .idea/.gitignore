@@ -9,6 +9,10 @@
 /dataSources/
 /dataSources.local.xml
 
+/data/*
+!/data/.gitkeep
+
+
 .xml
 .png
 .jpg
