@@ -1,4 +1,20 @@
+<<<<<<< Updated upstream
 #here is the main code
+=======
+# main.py
+
+from modular_data_read import TickerDataManager
+
+manager = TickerDataManager()
+manager.data_read("MBG.DE")
+manager.data_read("TSLA")
+
+manager.plot_all_extended()
+
+
+print(manager.ticker_dict.keys())
+
+>>>>>>> Stashed changes
 
 #TODO Daten einlesen mit yfinance
 #TODO Daten bereinigen nach aussreissern und evtl. etwas glätten
