@@ -2,32 +2,77 @@
 from modular_data_read import TickerDataManager
 from outlier_detection import OutlierDetector
 from breakpoint_detection import BreakpointDetector
+from stationarity import StationarityTransformer
+
+type = "normalized" 
+data_dict = {}
+
 
 manager = TickerDataManager()
 manager.data_read("MBG.DE")
 manager.data_read("TSLA")
 
-normalized_data_dict = {ticker: data["normalized"] for ticker, data in manager.ticker_dict.items()}
+normalized_data_dict = {ticker: data[type] for ticker, data in manager.ticker_dict.items()}
 
 detector = OutlierDetector(window=10)
 cleaned_dict = detector.process_dict(normalized_data_dict, plot=True)
 
-# Strukturbrüche erkennen
+
+# Breakpoint-Detektor
 bp_detector = BreakpointDetector(penalty_value=10)
 
-for ticker, cleaned_series in cleaned_dict.items():
-    annotated_df, breakpoints = bp_detector.annotate_series(cleaned_series)
 
-    print(f"{ticker} - Breakpoints an Positionen: {breakpoints}")
-    print(annotated_df[annotated_df["is_breakpoint"]])
 
-    # Plot
-    bp_detector.plot_breakpoints(cleaned_series, breakpoints, title=f"{ticker} - Breakpoint Analyse")
+for ticker in manager.ticker_dict.keys():
+    raw = manager.ticker_dict[ticker]
+    cleaned = cleaned_dict[ticker]
+    
+    # Breakpoint-Analyse
+    annotated_df, breakpoints = bp_detector.annotate_series(cleaned)
+    segments = bp_detector.segment_series(cleaned)
 
-#TODO Daten einlesen mit yfinance
-#TODO Daten bereinigen nach aussreissern und evtl. etwas glätten
-#TODO Daten speichern (.csv im data ordner oder .db)
-#TODO Daten splitten(80/20) für Modelltest - wie gut ist der predict
-#TODO ACF and PACF https://medium.com/@kis.andras.nandor/understanding-autocorrelation-and-partial-autocorrelation-functions-acf-and-pacf-2998e7e1bcb5
-#TODO Daten Visualisieren und va predict zu Relität unterschiede highlighten
-#TODO https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques
+    # Zusammensetzen
+    data_dict[ticker] = {
+        type : raw,
+        "cleaned": cleaned,
+        "breakpoints": breakpoints,
+        "annotated": annotated_df,
+        "segments": segments
+    }
+
+# Ausgabe zur Kontrolle
+for ticker, info in data_dict.items():
+    print(f"{ticker}: {len(info['segments'])} Segmente, {len(info['breakpoints'])} Breakpoints")
+
+
+
+
+
+transformer = StationarityTransformer()
+
+# 1. Beste Transformationseinstellungen finden
+best_params = transformer.find_best_transformation(data_dict, key='cleaned')
+
+print("Beste Transformationseinstellungen:")
+print(f"Log-Transformation: {best_params['log_transform']}")
+print(f"Differenzierungsgrad: {best_params['diff_order']}")
+print(f"Mittlerer ADF p-Wert: {best_params['mean_adf_pvalue']:.4f}")
+print(f"Mittlerer KPSS p-Wert: {best_params['mean_kpss_pvalue']:.4f}")
+
+# 2. Transformer konfigurieren
+transformer.log_transform = best_params['log_transform']
+transformer.diff_order = best_params['diff_order']
+
+# 3. Transformation durchführen und Ergebnisse holen
+transformed_dict, stationarity_results = transformer.process_dict(data_dict, key='cleaned', test=True)
+
+# 4. Ergebnisse ins data_dict speichern
+for ticker in transformed_dict:
+    if ticker not in data_dict:
+        data_dict[ticker] = {}
+    data_dict[ticker]['transformed'] = transformed_dict[ticker]
+    data_dict[ticker]['stationarity_results'] = stationarity_results[ticker]
+
+# 5. PACF-Plot für transformierte Zeitreihen
+transformed_data_wrapped = {k: {'cleaned': v} for k, v in transformed_dict.items()}
+transformer.plot_pacf_stocks(transformed_data_wrapped)
