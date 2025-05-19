@@ -76,3 +76,4 @@ for ticker in transformed_dict:
 # 5. PACF-Plot für transformierte Zeitreihen
 transformed_data_wrapped = {k: {'cleaned': v} for k, v in transformed_dict.items()}
 transformer.plot_pacf_stocks(transformed_data_wrapped)
+

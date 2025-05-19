@@ -3,6 +3,9 @@ Projekt zu der Zeitreihenanalyse im Schwerpunkt Vertiefung Business Analytics
 
 Lokales .venv aufsetzen und mit pip install -r requirements.txt alle erforderlichen bibliotheken laden
 
+## Team:
+Dalilah Baumann
+Niclas Gencer
 
 ### .venv setup (via powershell in windows) 
 
